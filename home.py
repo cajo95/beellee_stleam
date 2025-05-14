@@ -1,8 +1,8 @@
 import calendar
-import altair as alt
 import numpy as np
 import polars as pl
 import pandas as pd
+import altair as alt
 import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
@@ -10,7 +10,8 @@ from datetime import datetime
 from funtions import process_data, types_barchart, max_spent_data, purchases_table
 
 st.set_page_config(layout="wide")
-st.title("Libreta de gastos")
+st.header("Libreta de gastos")
+st.markdown("---")
 st.sidebar.header("Opciones")
 
 spent_options = sorted(process_data()[0]['type'].unique().to_list())
@@ -38,13 +39,13 @@ for i in options:
 type_spent = st.sidebar.multiselect(
     "Selecciona un tipo de gasto", 
     options=spent_options,
-    key="type_selector"  # Add a unique key
+    key="type_selector" 
 )
 
 type_payment = st.sidebar.multiselect(
     "Selecciona un tipo de pago", 
     options=payment_options,
-    key="payment_selector"  # Add a unique key
+    key="payment_selector" 
 )
 
 purchases_df = process_data(months_list, type_spent, type_payment)[0]
@@ -73,7 +74,6 @@ with col2:
         fig = go.Figure()
         df = df.sort('Gasto maximo permitido', descending=False)
         
-        # Iteramos sobre las filas (Polars usa iter_rows/named_rows)
         for row in df.iter_rows(named=True):
             tipo = row['Tipo']
             total = row['Total']
@@ -107,8 +107,8 @@ with col2:
             barmode='overlay',
             title={
                 'text': '📊Gasto maximo por cada tipo',
-                'y':0.9,  # Posición vertical del título (1 es el tope)
-                'x':0.3,  # Posición horizontal (0.5 es centro)
+                'y':0.9,  
+                'x':0.3, 
                 'xanchor': 'center',
                 'yanchor': 'top'
             },
@@ -117,10 +117,10 @@ with col2:
             showlegend=False,
             height=400,
             margin=dict(
-                l=100,   # margen izquierdo
-                r=50,    # margen derecho
-                t=80,    # margen superior (aumentado para separar título)
-                b=50     # margen inferior
+                l=100, 
+                r=50,
+                t=80,
+                b=50
             )
         )
         return fig
@@ -129,16 +129,52 @@ with col2:
     st.plotly_chart(bullet_chart, use_container_width=True)
 
 purchases_table_df = purchases_table(purchases_df)
-st.subheader("📋 Tabla de Datos")
-st.dataframe(purchases_table_df, use_container_width=True) # agregar titulo
+st.markdown("**📋 Compras realizadas**")
+st.dataframe(purchases_table_df, use_container_width=True)
+st.markdown("---")
 
-# st.subheader("📈 Gráfico de Líneas")
-# df_linea = pd.DataFrame({
-#     "Día": pd.date_range(start="2024-01-01", periods=10),
-#     "Valor": np.random.randint(20, 80, 10)
-# })
-# fig_line = px.line(df_linea, x="Día", y="Valor", markers=True)
-# fig_line.update_layout(height=400)
-# st.plotly_chart(fig_line, use_container_width=True)
-# st.subheader("📌 Métrica total")
-# st.metric(label="Suma total de valores", value=int(df_filtrado["Valor"].sum()))
+#st.header("👨‍💻 About Me")
+st.markdown("""
+<style>
+.about-me {
+    line-height: 1.8;
+    font-size: 16px;
+}
+.social-link {
+    margin-left: 10px;
+}
+</style>
+
+<div class="about-me">
+<p><strong>Camilo Durán Gutiérrez</strong></p>
+<p>📍 Colombia</p>
+<p>✉️ <a href="mailto:camiloduran2195@gmail.com">camiloduran2195@gmail.com</a></p>
+
+<p><strong>Connect with me:</strong></p>
+<ul>
+<li>🔗 GitHub: <a href="https://github.com/cajo95" target="_blank">github.com/cajo95</a></li>
+<li>🌐 Portfolio: <a href="https://abiding-seat-cb1.notion.site/Camilo-Dur-n-Guti-rrez-1c390ac432c28028a12de3255a2c339d" target="_blank">Notion Portfolio</a></li>
+<li>📸 Instagram: <a href="https://www.instagram.com/camilo_jdg/" target="_blank">@camilo_jdg</a></li>
+</ul>
+</div>
+""", unsafe_allow_html=True)
+
+# with st.expander("📩 Contact Form"):
+#     st.write("Send me a message directly:")
+#     contact_form = """
+#     <form action="https://formsubmit.co/camiloduran2195@gmail.com" method="POST">
+#         <input type="hidden" name="_captcha" value="false">
+#         <input type="text" name="name" placeholder="Your name" required style="width:100%; padding:8px; margin-bottom:10px;">
+#         <input type="email" name="email" placeholder="Your email" required style="width:100%; padding:8px; margin-bottom:10px;">
+#         <textarea name="message" placeholder="Your message" style="width:100%; padding:8px; margin-bottom:10px; height:100px;"></textarea>
+#         <button type="submit" style="background-color: #4CAF50; color: white; padding: 10px 15px; border: none; border-radius:4px;">Send Message</button>
+#     </form>
+#     """
+#     st.markdown(contact_form, unsafe_allow_html=True)
+
+st.markdown("---")
+st.markdown("""
+<div style="text-align: center; color: gray; padding: 10px;">
+    © 2025 Camilo Durán Gutiérrez | Data Science Portfolio
+</div>
+""", unsafe_allow_html=True)
