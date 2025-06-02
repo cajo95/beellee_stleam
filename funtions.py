@@ -6,6 +6,7 @@ import polars as pl
 import pandas as pd
 import psycopg2
 import os
+import requests
 #class data_configuration():
 def get_database_connection():
     try:
@@ -29,54 +30,28 @@ def get_database_connection():
 )
 def process_data(*args):    
     try:
-        engine = get_database_connection()
-        if engine is None:
+        API_BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8000")
+        response = requests.get(f"{API_BASE_URL}/data_purchases_df")
+        
+        if response.status_code != 200:
+            st.error("Failed to fetch data from API")
             return None, None
             
-        purchases = pl.read_database_uri(query='SELECT * FROM purchases', uri=engine)
-        items = pl.read_database_uri(query='SELECT * FROM items', uri=engine)
-        types = pl.read_database_uri(query='SELECT * FROM types', uri=engine)
-        type_payment = pl.read_database_uri(query='SELECT * FROM type_payment', uri=engine)
+        # Convert JSON response to Polars DataFrame
+        purchases_df = pl.DataFrame(response.json()["purchases"])
+        types = pl.DataFrame(response.json()["types"])
         
-        purchases_df = purchases.join(
-            type_payment,
-            left_on="type_payment_id",
-            right_on="id",
-            how="left"
-        )
-
-        types_df = types.drop('created_on')
-        items_df = items.join(
-            types_df,
-            left_on="type_id",
-            right_on="id",
-            how="left"
-        )
-        
-        drop_list = ['type_payment_id', 'invoice_B64', 'user_code_right', 'is_active', 'created_on_right']
-        purchases_df = purchases_df.drop(drop_list)
-        purchases_df = purchases_df.rename({"name": "type_payment"})
-        purchases_df = purchases_df.join(items_df, on="purchase_code", how="inner")
-        purchases_df = purchases_df.rename({"name_right": "type"})
-        purchase_drop_list = ['id', 'user_code', 'purchase_code', 'id_right', 'type_id', 'user_code_right', 'is_active', 'number_items']
-        purchases_df = purchases_df.drop(purchase_drop_list)
-        purchases_df = purchases_df.with_columns(
-            pl.col("created_on").dt.month().alias("month")
-        )
         if len(args) > 2:
-
             if args[0]:
                 purchases_df = purchases_df.filter(pl.col("month").is_in(args[0]))
             if args[1]:
                 purchases_df = purchases_df.filter(pl.col("type").is_in(args[1]))
             if args[2]:
                 purchases_df = purchases_df.filter(pl.col("type_payment").is_in(args[2]))
-        else:
-            pass
-        #print(purchases_df)
+                
         return purchases_df, types
     except Exception as e:
-        st.error(f"Data processing error: {str(e)}")
+        st.error(f"API request error: {str(e)}")
         return None, None
 
 def types_barchart(purchases_df):
